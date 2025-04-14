@@ -1,5 +1,7 @@
 .venv/
-./devbox/
+.devbox/
 bin/
 .env*
 *.env.*
+.pem*
+microservices.pem

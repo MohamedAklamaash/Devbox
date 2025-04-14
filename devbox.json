@@ -24,7 +24,9 @@
     "tilt@latest",
     "yq-go@latest",
     "act@latest",
-    "kubent@latest"
+    "kubent@latest",
+    "helm@latest",
+    "awscli2@latest"
   ],
   "shell": {
     "init_hook": [

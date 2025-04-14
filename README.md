@@ -32,3 +32,11 @@ eval "$(task --completion bash)"
 You can add the above line to your `.bashrc` or `.bash_profile` for persistent completions.
 
 ---
+
+## To add aws config to the project
+```bash
+    aws eks update-kubeconfig --name microservices --region us-east-1
+    aws sts get-caller-identity --profile MY-PROFILE
+```
+
+---

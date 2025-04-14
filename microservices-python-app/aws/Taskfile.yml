@@ -1,0 +1,90 @@
+version: '3'
+
+tasks:
+  setup:
+    desc: Create/Update Amazon_EKS_ClusterPolicy with trust policy and attach managed policies
+    cmds:
+      - task: create-trust-policy
+      - task: create-or-update-role
+      - task: attach-managed-policies
+
+  create-trust-policy:
+    desc: Create trust policy file for EKS Auto Mode
+    cmds:
+      - |
+        cat > eks-trust-policy.json <<EOF
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "eks.amazonaws.com"
+              },
+              "Action": [
+                "sts:AssumeRole",
+                "sts:TagSession"
+              ]
+            }
+          ]
+        }
+        EOF
+
+  create-or-update-role:
+    desc: Create or update IAM role Amazon_EKS_ClusterPolicy with proper trust policy
+    cmds:
+      - |
+        if aws iam get-role --role-name Amazon_EKS_ClusterPolicy >/dev/null 2>&1; then
+          echo "🔁 Updating existing role trust policy..."
+          aws iam update-assume-role-policy \
+            --role-name Amazon_EKS_ClusterPolicy \
+            --policy-document file://eks-trust-policy.json
+        else
+          echo "🆕 Creating new IAM role..."
+          aws iam create-role \
+            --role-name Amazon_EKS_ClusterPolicy \
+            --assume-role-policy-document file://eks-trust-policy.json
+        fi
+
+  attach-managed-policies:
+    desc: Attach all required AWS-managed policies to Amazon_EKS_ClusterPolicy
+    cmds:
+      - |
+        for policy in AmazonEKSBlockStoragePolicy AmazonEKSComputePolicy AmazonEKSLoadBalancingPolicy AmazonEKSNetworkingPolicy
+        do
+          echo "🔗 Attaching $policy"
+          aws iam attach-role-policy \
+            --role-name Amazon_EKS_ClusterPolicy \
+            --policy-arn arn:aws:iam::aws:policy/$policy
+        done
+    
+    creat-node-group:
+      desc: Create EKS node group
+      cmds:
+        - |
+          aws eks create-nodegroup \
+            --cluster-name microservices \
+            --nodegroup-name NodeGroup \
+            --node-role arn:aws:iam::145023102061:role/AmazonEKSNodeRole \
+            --subnets subnet-0219cb3de64d3fe86 subnet-028e14b3d4ca899a0 subnet-01fba226b0e006c59 subnet-08561eab5cd3653f4 subnet-07389a037cab38a09 \
+            --scaling-config minSize=1,maxSize=1,desiredSize=1 \
+            --ami-type AL2_x86_64 \
+            --instance-types t3.medium \
+            --disk-size 20 \
+            --remote-access ec2SshKey=microservices \
+            --tags "Name=microservices-nodegroup"
+
+    authorize-secgrp-ingress:
+      desc: To authorize security group ingress
+      cmds:
+        - |
+          aws ec2 authorize-security-group-ingress \
+          --group-id <your-security-group-id> \
+          --protocol tcp \
+          --port 30002-30005 \
+          --cidr 0.0.0.0/0
+
+  clean:
+    desc: Remove temporary trust policy file
+    cmds:
+      - rm -f eks-trust-policy.json
