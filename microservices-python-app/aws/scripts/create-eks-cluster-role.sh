@@ -25,7 +25,7 @@ echo "🔍 Checking if IAM role '$ROLE_NAME' exists..."
 aws iam get-role --role-name $ROLE_NAME >/dev/null 2>&1
 
 if [ $? -eq 0 ]; then
-  echo "✅ Role '$ROLE_NAME' already exists. Updating trust policy..."
+  echo "Role '$ROLE_NAME' already exists. Updating trust policy..."
   aws iam update-assume-role-policy \
     --role-name $ROLE_NAME \
     --policy-document file://$TRUST_POLICY_FILE
@@ -53,4 +53,4 @@ done
 
 rm -f $TRUST_POLICY_FILE
 
-echo "🎉 Done! '$ROLE_NAME' is fully configured for EKS Auto Mode."
+echo "Done! '$ROLE_NAME' is fully configured for EKS Auto Mode."

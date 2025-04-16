@@ -8,6 +8,32 @@ tasks:
       - task: create-or-update-role
       - task: attach-managed-policies
 
+  clustertoCLI:
+    desc: Configure AWS CLI to use the EKS cluster
+    cmds:
+      - |
+        read -p "Enter AWS region: " region
+        read -p "Enter EKS cluster name: " cluster
+        aws eks --region "$region" update-kubeconfig \
+          --name "$cluster" \
+          --kubeconfig ~/.kube/config
+        echo "Kubeconfig updated for EKS cluster '$cluster' in region '$region'"
+        
+  updateNodeGroupSize:
+    desc: Increase the number of pods that a node group can run
+    cmds:
+      |
+      read -p "Enter EKS cluster name: " cluster
+      read -p "Enter node group name: " nodegroup
+      read -p "Enter minimum size: " minSize
+      read -p "Enter maximum size: " maxSize
+      read -p "Enter desired size: " desiredSize
+      aws eks update-nodegroup-config \
+        --cluster-name "$cluster" \
+        --nodegroup-name "$nodegroup" \
+        --scaling-config minSize="$minSize",maxSize="$maxSize",desiredSize="$desiredSize"
+      echo "Node group size updated for EKS cluster '$cluster' and node group '$nodegroup'"
+
   create-trust-policy:
     desc: Create trust policy file for EKS Auto Mode
     cmds:
@@ -58,21 +84,21 @@ tasks:
             --policy-arn arn:aws:iam::aws:policy/$policy
         done
     
-    creat-node-group:
-      desc: Create EKS node group
-      cmds:
-        - |
-          aws eks create-nodegroup \
-            --cluster-name microservices \
-            --nodegroup-name NodeGroup \
-            --node-role arn:aws:iam::145023102061:role/AmazonEKSNodeRole \
-            --subnets subnet-0219cb3de64d3fe86 subnet-028e14b3d4ca899a0 subnet-01fba226b0e006c59 subnet-08561eab5cd3653f4 subnet-07389a037cab38a09 \
-            --scaling-config minSize=1,maxSize=1,desiredSize=1 \
-            --ami-type AL2_x86_64 \
-            --instance-types t3.medium \
-            --disk-size 20 \
-            --remote-access ec2SshKey=microservices \
-            --tags "Name=microservices-nodegroup"
+  creat-node-group:
+    desc: Create EKS node group
+    cmds:
+      - |
+        aws eks create-nodegroup \
+          --cluster-name microservices \
+          --nodegroup-name NodeGroup \
+          --node-role arn:aws:iam::145023102061:role/EKSNodeRole \
+          --subnets subnet-0219cb3de64d3fe86 subnet-028e14b3d4ca899a0 subnet-01fba226b0e006c59 subnet-08561eab5cd3653f4 subnet-07389a037cab38a09 \
+          --scaling-config minSize=1,maxSize=1,desiredSize=1 \
+          --ami-type AL2_x86_64 \
+          --instance-types t3.medium \
+          --disk-size 20 \
+          --remote-access ec2SshKey=microservices \
+          --tags "Name=microservices-nodegroup"
 
     authorize-secgrp-ingress:
       desc: To authorize security group ingress

@@ -26,7 +26,9 @@
     "act@latest",
     "kubent@latest",
     "helm@latest",
-    "awscli2@latest"
+    "awscli2@latest",
+    "mongosh@latest",
+    "postgresql@latest"
   ],
   "shell": {
     "init_hook": [
